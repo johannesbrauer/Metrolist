@@ -1139,7 +1139,7 @@ fun BottomSheetPlayer(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.add),
-                                        contentDescription = null,
+                                        contentDescription = stringResource(R.string.add_to_playlist),
                                         modifier = Modifier.size(24.dp),
                                     )
                                 }
@@ -1288,7 +1288,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.add),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.add_to_playlist),
                                     tint = iconButtonColor,
                                     modifier = Modifier
                                         .align(Alignment.Center)
