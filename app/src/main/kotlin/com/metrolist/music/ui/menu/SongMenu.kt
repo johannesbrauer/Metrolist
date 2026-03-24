@@ -230,6 +230,7 @@ fun SongMenu(
             }
             listOf(song.id)
         },
+        onGetSongIds = { listOf(song.id) },
         onDismiss = {
             showChoosePlaylistDialog = false
         },

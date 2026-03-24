@@ -74,6 +74,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.FilterChip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.runtime.saveable.Saver
 
 @Composable
 fun AddToPlaylistDialog(
@@ -81,6 +82,7 @@ fun AddToPlaylistDialog(
     allowSyncing: Boolean = true,
     initialTextFieldValue: String? = null,
     onGetSong: suspend (Playlist) -> List<String>, // list of song ids. Songs should be inserted to database in this function.
+    onGetSongIds: (suspend () -> List<String>)? = null,
     onDismiss: () -> Unit,
     viewModel: PlaylistsViewModel = hiltViewModel()
 ) {
@@ -109,8 +111,12 @@ fun AddToPlaylistDialog(
     var selectedPlaylist by remember {
         mutableStateOf<Playlist?>(null)
     }
-    var songIds by remember {
-        mutableStateOf<List<String>?>(null) // list is not saveable
+    val songIdsSaver = Saver<List<String>?, ArrayList<String>>(
+        save  = { it?.let { ArrayList(it) } ?: ArrayList() },
+        restore = { if (it.isEmpty()) null else it.toList() }
+    )
+    var songIds by rememberSaveable(stateSaver = songIdsSaver) {
+        mutableStateOf<List<String>?>(null)
     }
     var duplicates by remember {
         mutableStateOf(emptyList<String>())
@@ -119,26 +125,22 @@ fun AddToPlaylistDialog(
         mutableStateOf<Set<String>>(emptySet())
     }
 
-    LaunchedEffect(isVisible) {
+    LaunchedEffect(isVisible, playlists.isEmpty()) {
+        if (!isVisible || playlists.isEmpty()) return@LaunchedEffect
+        if (songIds != null) return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            songIds = onGetSongIds?.invoke() ?: onGetSong(playlists.first())
+        }
+    }
+    LaunchedEffect(isVisible, songIds, playlists) {
         if (!isVisible) {
-            songIds = null
             playlistsContainingSong = emptySet()
             return@LaunchedEffect
         }
-        if (playlists.isNotEmpty() && songIds == null) {
-            withContext(Dispatchers.IO) {
-                val ids = onGetSong(playlists.first())
-                songIds = ids
-            }
-        }
-    }
-    LaunchedEffect(songIds, playlists) {
         val ids = songIds ?: return@LaunchedEffect
         withContext(Dispatchers.IO) {
             playlistsContainingSong = playlists
-                .filter { playlist ->
-                    database.playlistDuplicates(playlist.id, ids).isNotEmpty()
-                }
+                .filter { database.playlistDuplicates(it.id, ids).isNotEmpty() }
                 .map { it.id }
                 .toSet()
         }
