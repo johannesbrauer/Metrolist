@@ -763,32 +763,35 @@ fun SongMenu(
                                     )
                                 },
                                 onClick = {
-                                    database.transaction {
-                                        move(
-                                            playlistSong.map.playlistId,
-                                            playlistSong.map.position,
-                                            Int.MAX_VALUE
-                                        )
-                                        delete(playlistSong.map.copy(position = Int.MAX_VALUE))
-                                    }
-                                    playlistBrowseId?.let { browseId ->
-                                        syncUtils.scheduleRemoveFromPlaylist(
-                                            browseId,
-                                            playlistSong.map.songId,
-                                            playlistSong.map.playlistId
-                                        ) {
-                                            // Poll DB until setVideoId is available — it's written during first sync
-                                            var setVideoId: String? = null
-                                            for (attempt in 0 until 10) {
-                                                setVideoId = database.getSetVideoId(playlistSong.map.songId)?.setVideoId
-                                                if (setVideoId != null) break
-                                                delay(3_000L)
-                                            }
-                                            setVideoId
+                                    playlistSong?.let { ps ->
+                                        database.transaction {
+                                            move(
+                                                ps.map.playlistId,
+                                                ps.map.position,
+                                                Int.MAX_VALUE
+                                            )
+                                            delete(ps.map.copy(position = Int.MAX_VALUE))
                                         }
+                                        playlistBrowseId?.let { browseId ->
+                                            syncUtils.scheduleRemoveFromPlaylist(
+                                                browseId,
+                                                ps.map.songId,
+                                                ps.map.playlistId
+                                            ) {
+                                                // Poll DB until setVideoId is available — it's written during first sync
+                                                var setVideoId: String? = null
+                                                for (attempt in 0 until 10) {
+                                                    setVideoId = database.getSetVideoId(ps.map.songId)?.setVideoId
+                                                    if (setVideoId != null) break
+                                                    delay(3_000L)
+                                                }
+                                                setVideoId
+                                            }
+                                        }
+                                        onDismiss()
+                                        playerConnection.playNext(song.toMediaItem())
                                     }
-                                    onDismiss()
-                                }
+                                },
                             )
                         )
                     }
