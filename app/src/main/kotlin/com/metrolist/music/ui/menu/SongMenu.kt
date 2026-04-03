@@ -825,6 +825,7 @@ fun SongMenu(
                                     },
                                     onClick = {
                                         playlistSong?.let { ps ->
+                                            val capturedSetVideoId = ps.map.setVideoId
                                             database.transaction {
                                                 move(
                                                     ps.map.playlistId,
@@ -839,15 +840,15 @@ fun SongMenu(
                                                     ps.map.songId,
                                                     ps.map.playlistId
                                                 ) {
-                                                    // Poll DB until setVideoId is available — it's written during first sync
-                                                    var setVideoId: String? = null
-                                                    for (attempt in 0 until 10) {
-                                                        setVideoId =
-                                                            database.getSetVideoId(ps.map.songId)?.setVideoId
-                                                        if (setVideoId != null) break
-                                                        delay(3_000L)
+                                                    capturedSetVideoId ?: run {
+                                                        var setVideoId: String? = null
+                                                        for (attempt in 0 until 10) {
+                                                            setVideoId = database.getSetVideoId(ps.map.songId)?.setVideoId
+                                                            if (setVideoId != null) break
+                                                            delay(3_000L)
+                                                        }
+                                                        setVideoId
                                                     }
-                                                    setVideoId
                                                 }
                                             }
                                             onDismiss()
