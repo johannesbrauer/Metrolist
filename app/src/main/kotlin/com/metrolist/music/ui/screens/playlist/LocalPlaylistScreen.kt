@@ -1366,9 +1366,9 @@ fun LocalPlaylistHeader(
                                             .map { it.id to it.setVideoId }
                                         addSongToPlaylistWithLibrarySync(playlist, songIds)
                                     }
-                                }
-                                scope.launch(Dispatchers.Main) {
-                                    snackbarHostState.showSnackbar(playlistSyncedStr)
+                                    withContext(Dispatchers.Main) {
+                                        snackbarHostState.showSnackbar(playlistSyncedStr)
+                                    }
                                 }
                             },
                             onDelete = onshowDeletePlaylistDialog,

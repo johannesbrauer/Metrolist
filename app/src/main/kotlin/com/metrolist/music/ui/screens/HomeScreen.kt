@@ -454,10 +454,7 @@ fun CommunityPlaylistCard(
                                     insert(playlistEntity)
                                     songMetadata.onEach { insert(it) }
                                     val songIds = songMetadata.map { it.id to it.setVideoId }
-                                    val createdPlaylist = database.playlist(playlistEntity.id).first()
-                                    if (createdPlaylist != null) {
-                                        database.addSongToPlaylistWithLibrarySync(createdPlaylist, songIds)
-                                    }
+                                    addSongToPlaylistWithLibrarySync(playlistEntity.id, songIds)
                                 }
                             } else {
                                 database.transaction {
